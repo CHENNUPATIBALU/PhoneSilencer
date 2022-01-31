@@ -128,7 +128,6 @@ public class MainFragment extends Fragment {
                 Chip silentChip = dialogView.findViewById(R.id.silentChip);
                 alertMode = "Silent";
                 Chip vibrateChip = dialogView.findViewById(R.id.vibrateChip);
-                Chip ringChip = dialogView.findViewById(R.id.ringChip);
 
                 silentChip.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -136,7 +135,6 @@ public class MainFragment extends Fragment {
                         alertMode = "Silent";
                         silentChip.setChecked(true);
                         vibrateChip.setChecked(false);
-                        ringChip.setChecked(false);
                     }
                 });
 
@@ -146,17 +144,6 @@ public class MainFragment extends Fragment {
                         alertMode = "Vibrate";
                         vibrateChip.setChecked(true);
                         silentChip.setChecked(false);
-                        ringChip.setChecked(false);
-                    }
-                });
-
-                ringChip.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        alertMode = "Ring";
-                        ringChip.setChecked(true);
-                        silentChip.setChecked(false);
-                        vibrateChip.setChecked(false);
                     }
                 });
 
@@ -182,6 +169,17 @@ public class MainFragment extends Fragment {
         });
 
         return root;
+    }
+
+    public String getBoundedBox(double latitude, double longitude){
+        double earthDiameter = 6378.137D;
+        double pi = Math.PI;
+        double m = (1/((2*pi*360)*earthDiameter))/1000;
+
+        double newLatitude = latitude+(100*m);
+        double newLongitude = longitude+(100*m)/Math.cos(latitude*(pi/180));
+
+        return newLatitude+","+newLongitude;
     }
 
     public void sendLocationDataToDB(String locationName, String[] coordinates, String alertMode){
@@ -262,12 +260,13 @@ public class MainFragment extends Fragment {
         ProgressDialog progressDialog = new ProgressDialog(getActivity());
         progressDialog.setMessage("Fetching your location");
         progressDialog.setCancelable(false);
+        progressDialog.show();
         if (ActivityCompat.checkSelfPermission(
                 getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
                 getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            progressDialog.dismiss();
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION);
         }else{
-            progressDialog.show();
             LocationRequest locationRequest = new LocationRequest();
             locationRequest.setInterval(2000);
             locationRequest.setFastestInterval(1000);

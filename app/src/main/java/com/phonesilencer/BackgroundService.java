@@ -29,11 +29,18 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 public class BackgroundService extends Service {
     private static final String NOTIF_ID = "100";
     private static final String NOTIF_CHANNEL_ID = "Notification";
     NotificationCompat.Builder notificationBuilder;
+    FirebaseFirestore db;
 
     public BackgroundService() {
 
@@ -66,6 +73,7 @@ public class BackgroundService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        db = FirebaseFirestore.getInstance();
         if(intent!=null){
             if(intent.getAction()!=null){
                 if(intent.getAction().equals("2000")){
@@ -95,7 +103,7 @@ public class BackgroundService extends Service {
         manager.createNotificationChannel(chan);
 
         notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
-        notificationBuilder.setSmallIcon(R.drawable.ic_launcher_foreground)
+        notificationBuilder.setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("App is running in background")
                 .setContentText("Syncing your location")
                 .setContentIntent(pendingIntent)
@@ -120,5 +128,54 @@ public class BackgroundService extends Service {
                 .removeLocationUpdates(locationCallback);
         stopForeground(true);
         stopSelf();
+    }
+
+    public void checkCoordinates(String curLatitude, String curLongitude){
+        db.collection("Users")
+                .document("Balu")
+                .collection("Locations")
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                    @Override
+                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                        for(QueryDocumentSnapshot qds:queryDocumentSnapshots){
+                            db.collection("Users")
+                                    .document("Balu")
+                                    .collection("Locations")
+                                    .document(qds.getId())
+                                    .get()
+                                    .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                                        @Override
+                                        public void onSuccess(DocumentSnapshot documentSnapshot) {
+                                            String coordinates = documentSnapshot.getData().get("Coordinates").toString();
+                                            double latitude = Double.parseDouble(coordinates.split(",")[0]);
+                                            double longitude = Double.parseDouble(coordinates.split(",")[1]);
+                                            if(latitude <= Double.parseDouble(curLatitude) && longitude <= Double.parseDouble(curLongitude)){
+                                                switch (documentSnapshot.getData().get("Alert Mode").toString()){
+                                                    case "Silent":
+                                                        new AudioManagerHelper(getApplicationContext()).setAudioToSilent();
+                                                        break;
+                                                    case "Vibrate":
+                                                        new AudioManagerHelper(getApplicationContext()).setAudioToVibration();
+                                                        break;
+                                                }
+                                            }
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+
+                                        }
+                                    });
+                        }
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+
+                    }
+                });
     }
 }

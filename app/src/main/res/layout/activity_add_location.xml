@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".AddLocationActivity">
+    android:layout_height="match_parent">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -61,8 +60,9 @@
                         android:text="Select your mode of alert"/>
 
                     <com.google.android.material.chip.ChipGroup
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="match_parent"
+                        android:layout_gravity="center"
                         android:id="@+id/chipGroup">
 
                         <com.google.android.material.chip.Chip
@@ -79,13 +79,6 @@
                             android:layout_height="wrap_content"
                             style="@style/Widget.MaterialComponents.Chip.Choice"
                             android:text="Vibrate"/>
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/ringChip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.Chip.Choice"
-                            android:text="Ring"/>
 
                     </com.google.android.material.chip.ChipGroup>
 
