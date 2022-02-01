@@ -21,8 +21,8 @@ public class StorageHelper extends SQLiteOpenHelper {
 
     Context context;
     public static final String col_1 = "name";
-    public static final String col_2 = "latitude";
-    public static final String col_3 = "longitude";
+    public static final String col_2 = "location";
+    public static final String col_3 = "alertMode";
 
     public StorageHelper(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
@@ -31,7 +31,7 @@ public class StorageHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        sqLiteDatabase.execSQL("create table locations(name text primary key,latitude text, longitude text, addedDate text)");
+        sqLiteDatabase.execSQL("create table locations(name text primary key,location text, alertMode text)");
     }
 
     @Override
@@ -40,12 +40,12 @@ public class StorageHelper extends SQLiteOpenHelper {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public void setData(String[] locationCoordinates){
+    public void setData(String name, String[] locationCoordinates, String alertMode){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
-        cv.put(col_1,"Name");
-        cv.put(col_2,locationCoordinates[0]);
-        cv.put(col_3,locationCoordinates[1]);
+        cv.put(col_1,name);
+        cv.put(col_2,locationCoordinates[0]+","+locationCoordinates[1]);
+        cv.put(col_3,alertMode);
 
         try{
             db.insert("locations",null,cv);
@@ -53,7 +53,6 @@ public class StorageHelper extends SQLiteOpenHelper {
             Log.d(TAG, "setData: "+sqLiteConstraintException);
             Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show();
         }
-
 
         db.close();
     }
@@ -65,6 +64,18 @@ public class StorageHelper extends SQLiteOpenHelper {
         if(cursor.getCount()>0){
             while(cursor.moveToNext()){
                 res+=cursor.getString(0)+","+cursor.getString(1)+","+cursor.getString(2)+"\n";
+            }
+        }
+        return res;
+    }
+
+    public String getLocationNameByCoordinates(String location){
+        String res = "";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("select * from locations where location=?",new String[]{location});
+        if(cursor.getCount()>0){
+            while (cursor.moveToNext()){
+                res += cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2);
             }
         }
         return res;

@@ -66,7 +66,7 @@ public class FetchLocation extends AsyncTask<String, Void, String> {
 
     @Override
     protected void onPostExecute(String s) {
-        new SharedPreferencesHelper(context).setLocationAddress(s.split(";")[0],s.split(";")[1]);
+//        new SharedPreferencesHelper(context).setLocationAddress(s.split(";")[0],s.split(";")[1]);
         super.onPostExecute(s);
     }
 }

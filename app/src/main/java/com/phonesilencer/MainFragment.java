@@ -182,34 +182,15 @@ public class MainFragment extends Fragment {
         return newLatitude+","+newLongitude;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void sendLocationDataToDB(String locationName, String[] coordinates, String alertMode){
         ProgressDialog progressDialog = new ProgressDialog(getActivity());
         progressDialog.setMessage("Adding your location");
         progressDialog.setCancelable(false);
         progressDialog.show();
-        Map<String,Object> map = new HashMap<>();
-        map.put("Location Name", locationName+"");
-        map.put("Coordinates",coordinates[0]+","+coordinates[1]);
-        map.put("Alert Mode",alertMode+"");
-        db.collection("Users")
-                .document("Balu")
-                .collection("Locations")
-                .document(locationName)
-                .set(map)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        progressDialog.dismiss();
-                        Toast.makeText(getActivity(), "Location added", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        progressDialog.dismiss();
-                        Log.d(TAG, "onFailure: "+e);
-                    }
-                });
+
+        storageHelper.setData(locationName,coordinates,alertMode);
+        progressDialog.dismiss();
     }
 
     private void getAddress(String latitude, String longitude) {
