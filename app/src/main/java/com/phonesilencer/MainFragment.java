@@ -3,7 +3,9 @@ package com.phonesilencer;
 import static android.content.ContentValues.TAG;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -17,6 +19,7 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -66,26 +69,7 @@ public class MainFragment extends Fragment {
     FirebaseFirestore db;
     double latitude,longitude;
     CircularProgressIndicator locationProgress;
-
-    private LocationCallback locationCallback = new LocationCallback() {
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        @Override
-        public void onLocationResult(@NonNull LocationResult locationResult) {
-            super.onLocationResult(locationResult);
-            if (locationResult != null && locationResult.getLastLocation() != null) {
-                latitude = locationResult.getLastLocation().getLatitude();
-                longitude = locationResult.getLastLocation().getLongitude();
-                latTv.setText("Latitude: "+latitude);
-                longTv.setText("Longitude: "+longitude);
-                locationProgress.setVisibility(View.GONE);
-            }
-        }
-
-        @Override
-        public void onLocationAvailability(@NonNull LocationAvailability locationAvailability) {
-            super.onLocationAvailability(locationAvailability);
-        }
-    };
+    private LocationCallback locationCallback;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -110,7 +94,6 @@ public class MainFragment extends Fragment {
         rippleBackground = root.findViewById(R.id.rippleBg);
         rippleBackground.startRippleAnimation();
 
-        requestPermissions();
         startLocationService();
 
         getLocation();
@@ -154,7 +137,8 @@ public class MainFragment extends Fragment {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String locationName = inputLayout.getEditText().getText().toString();
                         String coordinates[] = new String[]{latitude+"",longitude+""};
-                        sendLocationDataToDB(locationName,coordinates,alertMode);
+                        sendLocationDataToDB(locationName,coordinates,alertMode,getBoundedBox(latitude,longitude));
+                        checkDNDPermission();
                     }
                 });
 
@@ -173,21 +157,30 @@ public class MainFragment extends Fragment {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public void sendLocationDataToDB(String locationName, String[] coordinates, String alertMode){
+    public void sendLocationDataToDB(String locationName, String[] coordinates, String alertMode, String boundedBox){
         ProgressDialog progressDialog = new ProgressDialog(getActivity());
         progressDialog.setMessage("Adding your location");
         progressDialog.setCancelable(false);
         progressDialog.show();
-        storageHelper.setData(locationName,coordinates,alertMode);
+        storageHelper.setData(locationName,coordinates,alertMode,boundedBox);
         progressDialog.dismiss();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public void checkDNDPermission(){
-        try{
-            AudioManager audioManager = (AudioManager) getActivity().getSystemService(Context.AUDIO_SERVICE);
-            audioManager.getMode();
-        }catch (SecurityException securityException){
-            startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
+        NotificationManager notificationManager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+        if(!notificationManager.isNotificationPolicyAccessGranted()){
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setMessage("Enable Do-Not-Disturb permission to silent/vibrate your device");
+            builder.setCancelable(false);
+            builder.setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+                    startActivity(intent);
+                }
+            });
+            builder.show();
         }
     }
 
@@ -242,6 +235,26 @@ public class MainFragment extends Fragment {
             progressDialog.dismiss();
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION);
         }else{
+            locationCallback = new LocationCallback() {
+                @RequiresApi(api = Build.VERSION_CODES.O)
+                @Override
+                public void onLocationResult(@NonNull LocationResult locationResult) {
+                    super.onLocationResult(locationResult);
+                    if (locationResult != null && locationResult.getLastLocation() != null) {
+                        latitude = locationResult.getLastLocation().getLatitude();
+                        longitude = locationResult.getLastLocation().getLongitude();
+                        latTv.setText("Latitude: "+latitude);
+                        longTv.setText("Longitude: "+longitude);
+                        locationProgress.setVisibility(View.GONE);
+                    }
+                }
+
+                @Override
+                public void onLocationAvailability(@NonNull LocationAvailability locationAvailability) {
+                    super.onLocationAvailability(locationAvailability);
+                }
+            };
+
             LocationRequest locationRequest = new LocationRequest();
             locationRequest.setInterval(2000);
             locationRequest.setFastestInterval(1000);
@@ -252,12 +265,27 @@ public class MainFragment extends Fragment {
         }
     }
 
-    private void requestPermissions(){
-        if (ActivityCompat.checkSelfPermission(
-                getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION);
+    public String getBoundedBox(double latitude, double longitude){
+        double earthDiameter = 6378.137D;
+        double pi = Math.PI;
+        double m = (1/((2*pi*360)*earthDiameter))/1000;
+
+        double newLatitude = latitude+(100*m);
+        double newLongitude = longitude+(100*m)/Math.cos(latitude*(pi/180));
+
+        return newLatitude+","+newLongitude;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode){
+            case LOCATION_PERMISSION:
+                if(grantResults[0]==PackageManager.PERMISSION_GRANTED && grantResults.length>0){
+                    getLocation();
+                }
+                break;
         }
-        checkDNDPermission();
     }
 }

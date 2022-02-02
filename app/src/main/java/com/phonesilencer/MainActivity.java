@@ -29,16 +29,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 switch (item.getItemId()){
-                    case R.id.homeMenu: changeFragment(new MainFragment(),"Main");return true;
-                    case R.id.locationsMenu: changeFragment(new LocationsFragment(),"Locations");return true;
+                    case R.id.homeMenu: changeFragment(new MainFragment());return true;
+                    case R.id.locationsMenu: changeFragment(new LocationsFragment());return true;
                 }
                 return false;
             }
         });
     }
 
-    private void changeFragment(Fragment fragment, String name){
-        getSupportFragmentManager().beginTransaction().addToBackStack(name).replace(R.id.mainFragment,fragment).commit();
+    private void changeFragment(Fragment fragment){
+        getSupportFragmentManager().beginTransaction().addToBackStack("fragment").replace(R.id.mainFragment,fragment).commit();
     }
 
     @Override

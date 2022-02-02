@@ -3,8 +3,11 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/chenn/AndroidStudioProjects/PhoneSilencer/app/src/main/res/drawable/radio_selected.xml" value="0.1525" />
+        <entry key="..\:/Users/chenn/AndroidStudioProjects/PhoneSilencer/app/src/main/res/drawable/radio_selector.xml" value="0.1525" />
         <entry key="..\:/Users/chenn/AndroidStudioProjects/PhoneSilencer/app/src/main/res/layout/activity_add_location.xml" value="0.25" />
         <entry key="..\:/Users/chenn/AndroidStudioProjects/PhoneSilencer/app/src/main/res/layout/activity_custom_notification.xml" value="0.2323076923076923" />
+        <entry key="..\:/Users/chenn/AndroidStudioProjects/PhoneSilencer/app/src/main/res/layout/activity_intro.xml" value="0.2323076923076923" />
         <entry key="..\:/Users/chenn/AndroidStudioProjects/PhoneSilencer/app/src/main/res/layout/activity_main.xml" value="0.15677966101694915" />
         <entry key="..\:/Users/chenn/AndroidStudioProjects/PhoneSilencer/app/src/main/res/layout/activity_splash.xml" value="0.23981481481481481" />
         <entry key="..\:/Users/chenn/AndroidStudioProjects/PhoneSilencer/app/src/main/res/layout/fragment_locations.xml" value="0.24537037037037038" />

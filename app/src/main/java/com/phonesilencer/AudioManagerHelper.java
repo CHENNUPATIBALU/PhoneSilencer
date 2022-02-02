@@ -26,12 +26,4 @@ public class AudioManagerHelper{
     public void setAudioToVibration(){
         audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
     }
-
-    public void checkDNDPermission(){
-        try{
-            int mode = audioManager.getMode();
-        }catch (SecurityException securityException){
-            context.startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
-        }
-    }
 }

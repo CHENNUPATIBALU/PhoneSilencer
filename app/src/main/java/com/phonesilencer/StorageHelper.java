@@ -24,6 +24,7 @@ public class StorageHelper extends SQLiteOpenHelper {
     public static final String col_2 = "location";
     public static final String col_3 = "alertMode";
     public static final String col_4 = "status";
+    public static final String col_5 = "boundedBox";
 
     public StorageHelper(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
@@ -32,7 +33,7 @@ public class StorageHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        sqLiteDatabase.execSQL("create table locations(name text primary key,location text, alertMode text, status int)");
+        sqLiteDatabase.execSQL("create table locations(name text primary key,location text, alertMode text, status int, boundedBox text)");
     }
 
     @Override
@@ -41,13 +42,14 @@ public class StorageHelper extends SQLiteOpenHelper {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public void setData(String name, String[] locationCoordinates, String alertMode){
+    public void setData(String name, String[] locationCoordinates, String alertMode, String boundedBox){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(col_1,name);
         cv.put(col_2,locationCoordinates[0]+","+locationCoordinates[1]);
         cv.put(col_3,alertMode);
         cv.put(col_4,1);
+        cv.put(col_5,boundedBox);
 
         try{
             db.insert("locations",null,cv);
@@ -80,10 +82,11 @@ public class StorageHelper extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery("select * from locations where location=?",new String[]{location});
         if(cursor.getCount()>0){
             while (cursor.moveToNext()){
-                res += cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getInt(3);
+                res += cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getInt(3)+";"+cursor.getString(4);
             }
+            db.close();
+            return res;
         }
-        db.close();
         return res;
     }
 
