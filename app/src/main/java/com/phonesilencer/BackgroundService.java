@@ -60,7 +60,6 @@ public class BackgroundService extends Service {
                 double longitude = locationResult.getLastLocation().getLongitude();
                 Log.d("LOCATION_UPDATE", latitude + ", " + longitude);
                 checkCoordinates(latitude+"",longitude+"");
-                //new StorageHelper(getApplicationContext(),"Silencer",null,1).setData(new String[]{latitude+"",longitude+""});
             }
         }
 
@@ -144,74 +143,36 @@ public class BackgroundService extends Service {
             double latitude = Double.parseDouble(details[1].split(",")[0]);
             double longitude = Double.parseDouble(details[1].split(",")[1]);
             String alertMode = details[2];
-            if(latitude == Double.parseDouble(curLatitude) && longitude == Double.parseDouble(curLongitude)){
+            String status = details[3];
+            if(String.valueOf(latitude).equals(curLatitude)  && String.valueOf(longitude).equals(curLongitude) && status.equals("1")){
                 switch (alertMode){
                     case "Silent":
-                        new AudioManagerHelper(getApplicationContext()).setAudioToSilent();
+                        try{
+                            new AudioManagerHelper(getApplicationContext()).setAudioToSilent();
+                        }catch (SecurityException securityException){
+                            Toast.makeText(this, "Do Not Disturb Permission not granted", Toast.LENGTH_SHORT).show();
+                        }
                         Log.d(TAG, "onSuccess: SILENCED");
                         break;
                     case "Vibrate":
-                        new AudioManagerHelper(getApplicationContext()).setAudioToVibration();
+                        try{
+                            new AudioManagerHelper(getApplicationContext()).setAudioToVibration();
+                        }catch (SecurityException securityException){
+                            Toast.makeText(this, "Do Not Disturb Permission not granted", Toast.LENGTH_SHORT).show();
+                        }
                         Log.d(TAG, "onSuccess: VIBRATE");
                         break;
                 }
             }else{
-                new AudioManagerHelper(getApplicationContext()).setAudioToNormal();
+                try{
+                    new AudioManagerHelper(getApplicationContext()).setAudioToNormal();
+                }catch (SecurityException securityException){
+                    Toast.makeText(this, "Do Not Disturb Permission not granted", Toast.LENGTH_SHORT).show();
+                }
                 Log.d(TAG, "onSuccess: NORMAL");
             }
-        }else{
-            Toast.makeText(this, "No Locations added", Toast.LENGTH_SHORT).show();
         }
-//        db.collection("Users")
-//                .document("Balu")
-//                .collection("Locations")
-//                .get()
-//                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-//                    @Override
-//                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-//                        for(QueryDocumentSnapshot qds:queryDocumentSnapshots){
-//                            db.collection("Users")
-//                                    .document("Balu")
-//                                    .collection("Locations")
-//                                    .document(qds.getId())
-//                                    .get()
-//                                    .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-//                                        @Override
-//                                        public void onSuccess(DocumentSnapshot documentSnapshot) {
-//                                            String coordinates = documentSnapshot.getData().get("Coordinates").toString();
-//                                            double latitude = Double.parseDouble(coordinates.split(",")[0]);
-//                                            double longitude = Double.parseDouble(coordinates.split(",")[1]);
-//                                            if(latitude == Double.parseDouble(curLatitude) && longitude == Double.parseDouble(curLongitude)){
-//                                                switch (documentSnapshot.getData().get("Alert Mode").toString()){
-//                                                    case "Silent":
-//                                                        new AudioManagerHelper(getApplicationContext()).setAudioToSilent();
-//                                                        Log.d(TAG, "onSuccess: SILENCED");
-//                                                        break;
-//                                                    case "Vibrate":
-//                                                        new AudioManagerHelper(getApplicationContext()).setAudioToVibration();
-//                                                        Log.d(TAG, "onSuccess: VIBRATE");
-//                                                        break;
-//                                                }
-//                                            }else{
-//                                                new AudioManagerHelper(getApplicationContext()).setAudioToNormal();
-//                                                Log.d(TAG, "onSuccess: NORMAL");
-//                                            }
-//                                        }
-//                                    })
-//                                    .addOnFailureListener(new OnFailureListener() {
-//                                        @Override
-//                                        public void onFailure(@NonNull Exception e) {
-//
-//                                        }
-//                                    });
-//                        }
-//                    }
-//                })
-//                .addOnFailureListener(new OnFailureListener() {
-//                    @Override
-//                    public void onFailure(@NonNull Exception e) {
-//
-//                    }
-//                });
     }
+
+
 }

@@ -8,8 +8,4 @@
         android:id="@+id/locationsMenu"
         android:title="Locations"
         android:icon="@drawable/ic_map" />
-    <item
-        android:id="@+id/profileMenu"
-        android:title="Profile"
-        android:icon="@drawable/ic_profile" />
 </menu>

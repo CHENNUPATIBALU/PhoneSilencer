@@ -1,6 +1,10 @@
 package com.phonesilencer;
 
+import static android.content.ContentValues.TAG;
+
+import android.app.ProgressDialog;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 
@@ -8,10 +12,12 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -21,6 +27,7 @@ import android.widget.Toast;
 public class LocationsFragment extends Fragment {
 
     LinearLayout rootLayout;
+    StorageHelper storageHelper;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -31,6 +38,7 @@ public class LocationsFragment extends Fragment {
         }
 
         rootLayout = root.findViewById(R.id.locationsLayout);
+        storageHelper = new StorageHelper(getActivity(),"Silencer",null,1);
 
         populateLocations();
 
@@ -39,21 +47,25 @@ public class LocationsFragment extends Fragment {
 
     public void populateLocations(){
         String allLocations = new StorageHelper(getActivity(),"Silencer",null,1).getData();
-        String[] locations = allLocations.split("\n");
+        if(!allLocations.equals("")){
+            String[] locations = allLocations.split("\n");
 
-        for(String location: locations){
-            String[] loc = location.split(",");
-            populateLocation(loc[0],new String[]{loc[1],loc[2]});
+            for(String location: locations){
+                String[] loc = location.split(";");
+                populateLocation(loc[0],loc[1],loc[3]);
+            }
+        }else{
+            Toast.makeText(getActivity(), "No Locations added", Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void populateLocation(String name, String[] coordinates){
+    public void populateLocation(String name, String coordinates, String checked){
         FrameLayout frameLayout = new FrameLayout(getActivity());
         FrameLayout.LayoutParams fParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         frameLayout.setLayoutParams(fParams);
 
         CardView locationCard = new CardView(getActivity());
-        locationCard.setElevation(20);
+        locationCard.setElevation(10);
         locationCard.setRadius(5);
         FrameLayout.LayoutParams locationCardParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         locationCardParams.setMargins(20,20,20,20);
@@ -85,7 +97,12 @@ public class LocationsFragment extends Fragment {
         horizontalLayout1.setLayoutParams(horizontalLayout1Params);
 
         SwitchCompat switchCompat = new SwitchCompat(getActivity());
+        boolean check = (checked.equals("1"))?true:false;
+        Log.d(TAG, "populateLocation: "+checked);
+
+        switchCompat.setChecked(check);
         LinearLayout.LayoutParams switchParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        switchParams.setMargins(0,0,70,0);
         switchCompat.setLayoutParams(switchParams);
 
         horizontalLayout1.addView(switchCompat);
@@ -93,7 +110,7 @@ public class LocationsFragment extends Fragment {
         verticalLayout.addView(horizontalLayout);
 
         TextView coordTv = new TextView(getActivity());
-        coordTv.setText(coordinates[0]+", "+coordinates[1]);
+        coordTv.setText(coordinates);
         LinearLayout.LayoutParams coordParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         coordTv.setLayoutParams(coordParams);
 
@@ -103,8 +120,8 @@ public class LocationsFragment extends Fragment {
         CardView deleteCard = new CardView(getActivity());
         deleteCard.setRadius(40);
         deleteCard.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.delete_bg)));
-        LinearLayout.LayoutParams deleteCardParams = new LinearLayout.LayoutParams(60,60);
-        deleteCardParams.setMargins(100,10,10,10);
+        LinearLayout.LayoutParams deleteCardParams = new LinearLayout.LayoutParams(80,80);
+        deleteCardParams.setMargins(120,10,10,10);
         deleteCard.setLayoutParams(deleteCardParams);
 
         ImageView deleteImg = new ImageView(getActivity());
@@ -116,6 +133,7 @@ public class LocationsFragment extends Fragment {
         deleteCard.addView(deleteImg);
 
         LinearLayout layout = new LinearLayout(getActivity());
+        layout.setOrientation(LinearLayout.VERTICAL);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         layout.setLayoutParams(layoutParams);
 
@@ -126,8 +144,29 @@ public class LocationsFragment extends Fragment {
 
         layout1.addView(deleteCard);
 
+        deleteCard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ProgressDialog progressDialog = new ProgressDialog(getActivity());
+                progressDialog.setMessage("Deleting the location");
+                progressDialog.setCancelable(false);
+                progressDialog.show();
+                storageHelper.deleteDataByLocationName(name);
+                progressDialog.dismiss();
+                layout.setVisibility(View.GONE);
+                rootLayout.removeView(layout);
+            }
+        });
+
+        switchCompat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                storageHelper.changeLocationStatus(name,(b)?1:0);
+            }
+        });
+
+        locationCard.addView(layout1);
         frameLayout.addView(locationCard);
-        frameLayout.addView(layout1);
         layout.addView(frameLayout);
         rootLayout.addView(layout);
     }

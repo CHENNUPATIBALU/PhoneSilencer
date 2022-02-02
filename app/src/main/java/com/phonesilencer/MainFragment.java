@@ -23,6 +23,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,6 +43,8 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -52,7 +55,7 @@ import java.util.Map;
 
 public class MainFragment extends Fragment {
 
-    Button addLocationBtn;
+    FloatingActionButton addLocationBtn;
     TextView latTv,longTv,locTv;
     public static final int LOCATION_PERMISSION = 100;
     public static final int STORAGE_PERMISSION = 200;
@@ -62,7 +65,7 @@ public class MainFragment extends Fragment {
     String alertMode = "";
     FirebaseFirestore db;
     double latitude,longitude;
-
+    CircularProgressIndicator locationProgress;
 
     private LocationCallback locationCallback = new LocationCallback() {
         @RequiresApi(api = Build.VERSION_CODES.O)
@@ -74,9 +77,7 @@ public class MainFragment extends Fragment {
                 longitude = locationResult.getLastLocation().getLongitude();
                 latTv.setText("Latitude: "+latitude);
                 longTv.setText("Longitude: "+longitude);
-                getAddress(latitude+"",longitude+"");
-                locTv.setText("Location: "+new SharedPreferencesHelper(getActivity()).getLocationAddress());
-                //storageHelper.setData(new String[]{latitude+"",longitude+""});
+                locationProgress.setVisibility(View.GONE);
             }
         }
 
@@ -101,7 +102,7 @@ public class MainFragment extends Fragment {
 
         latTv = root.findViewById(R.id.latitudeTv);
         longTv = root.findViewById(R.id.longitudeTv);
-        locTv = root.findViewById(R.id.locationTv);
+        locationProgress = root.findViewById(R.id.locationProgress);
 
 
         storageHelper = new StorageHelper(getActivity(),"Silencer",null,1);
@@ -171,30 +172,23 @@ public class MainFragment extends Fragment {
         return root;
     }
 
-    public String getBoundedBox(double latitude, double longitude){
-        double earthDiameter = 6378.137D;
-        double pi = Math.PI;
-        double m = (1/((2*pi*360)*earthDiameter))/1000;
-
-        double newLatitude = latitude+(100*m);
-        double newLongitude = longitude+(100*m)/Math.cos(latitude*(pi/180));
-
-        return newLatitude+","+newLongitude;
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void sendLocationDataToDB(String locationName, String[] coordinates, String alertMode){
         ProgressDialog progressDialog = new ProgressDialog(getActivity());
         progressDialog.setMessage("Adding your location");
         progressDialog.setCancelable(false);
         progressDialog.show();
-
         storageHelper.setData(locationName,coordinates,alertMode);
         progressDialog.dismiss();
     }
 
-    private void getAddress(String latitude, String longitude) {
-        new FetchLocation(getActivity()).execute(latitude+","+longitude);
+    public void checkDNDPermission(){
+        try{
+            AudioManager audioManager = (AudioManager) getActivity().getSystemService(Context.AUDIO_SERVICE);
+            audioManager.getMode();
+        }catch (SecurityException securityException){
+            startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
+        }
     }
 
     private boolean isLocationServiceRunning(){
@@ -264,14 +258,6 @@ public class MainFragment extends Fragment {
                 getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION);
         }
-        if(ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},STORAGE_PERMISSION);
-        }
-        if(ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},STORAGE_PERMISSION);
-        }
-        if(ActivityCompat.checkSelfPermission(getActivity(),Manifest.permission.FOREGROUND_SERVICE)!=PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(getActivity(),new String[]{Manifest.permission.FOREGROUND_SERVICE},201);
-        }
+        checkDNDPermission();
     }
 }
