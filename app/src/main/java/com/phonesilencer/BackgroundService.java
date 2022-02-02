@@ -62,7 +62,7 @@ public class BackgroundService extends Service {
                 double latitude = locationResult.getLastLocation().getLatitude();
                 double longitude = locationResult.getLastLocation().getLongitude();
                 Log.d("LOCATION_UPDATE", latitude + ", " + longitude);
-                checkCoordinates(latitude+"",longitude+"");
+                checkCoordinates(String.format("%.4f",latitude),String.format("%.4f",longitude));
             }
         }
 
@@ -140,7 +140,8 @@ public class BackgroundService extends Service {
 
     public void checkCoordinates(String curLatitude, String curLongitude){
         String boundedRegion = getBoundedBox(Double.parseDouble(curLatitude),Double.parseDouble(curLongitude));
-        String data = storageHelper.getLocationNameByCoordinates(curLatitude+","+curLongitude);
+        String data = storageHelper.getLocationNameByCoordinates(boundedRegion.split(",")[0]+","+boundedRegion.split(",")[1]);
+        Log.d(TAG, "checkCoordinates: "+boundedRegion);
         if(!data.equals("")){
             String[] details = data.split(";");
             String latitude = Double.parseDouble(details[4].split(",")[0])+"";
@@ -149,13 +150,17 @@ public class BackgroundService extends Service {
             String alertMode = details[2];
             String status = details[3];
 
+            curLatitude = boundedRegion.split(",")[0];
+            curLongitude = boundedRegion.split(",")[1];
+            Log.d(TAG, "checkCoordinates: "+latitude.split("\\.")[0]);
             if(latitude.split("\\.")[0].equals(curLatitude.split("\\.")[0]) && longitude.split("\\.")[0].equals(curLongitude.split("\\.")[0])){
                 String latDec = latitude.split("\\.")[1];
+                Log.d(TAG, "checkCoordinates: "+latDec);
                 String longDec = longitude.split("\\.")[1];
                 String curLatDec = curLatitude.split("\\.")[1];
                 String curLongDec = curLongitude.split("\\.")[1];
 
-                if((Long.parseLong(curLatDec)>=Long.parseLong(latDec) &&  Long.parseLong(curLatDec)<=Long.parseLong(boundedRegion.split(",")[0])) && (Long.parseLong(curLongDec)>=Long.parseLong(longDec) && Long.parseLong(curLongDec)<=Long.parseLong(boundedRegion.split(",")[1])) && status.equals("1")){
+                if((Long.parseLong(curLatDec)<=Long.parseLong(latDec) &&  Long.parseLong(curLatDec)<=Long.parseLong(boundedRegion.split(",")[0])) && (Long.parseLong(curLongDec)>=Long.parseLong(longDec) && Long.parseLong(curLongDec)<=Long.parseLong(boundedRegion.split(",")[1])) && status.equals("1")){
                     switch (alertMode){
                         case "Silent":
                             try{
@@ -194,7 +199,7 @@ public class BackgroundService extends Service {
         double newLatitude = latitude+(100*m);
         double newLongitude = longitude+(100*m)/Math.cos(latitude*(pi/180));
 
-        return newLatitude+","+newLongitude;
+        return String.format("%.4f",newLatitude)+","+String.format("%.4f",newLongitude);
     }
 
 

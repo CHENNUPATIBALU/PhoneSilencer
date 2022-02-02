@@ -79,15 +79,33 @@ public class StorageHelper extends SQLiteOpenHelper {
     public String getLocationNameByCoordinates(String location){
         String res = "";
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("select * from locations where location=?",new String[]{location});
+        Cursor cursor = db.rawQuery("select * from locations where boundedBox=?",new String[]{location});
         if(cursor.getCount()>0){
             while (cursor.moveToNext()){
                 res += cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getInt(3)+";"+cursor.getString(4);
             }
-            db.close();
-            return res;
+
+            String result = res.split(";")[4];
+            String latitude = compareBoundedBoxes(result.split(",")[0],location.split(",")[0]);
+            Log.d(TAG, "getLocationNameByCoordinates: "+latitude);
+            String longitude = compareBoundedBoxes(result.split(",")[1],location.split(",")[1]);
+
+            if(!(latitude.equals("") && longitude.equals(""))){
+                return res.split(";")[0]+";"+res.split(";")[1]+";"+res.split(";")[2]+";"+res.split(";")[3]+";"+";"+latitude+","+longitude;
+            }
         }
+        db.close();
         return res;
+    }
+
+    public String compareBoundedBoxes(String max, String cur){
+        Log.d(TAG, "compareBoundedBoxes: "+Integer.parseInt(cur.split("\\.")[0]));
+        if(Integer.parseInt(cur.split("\\.")[0])==Integer.parseInt(max.split("\\.")[0])) {
+            if(Long.parseLong(cur.split("\\.")[1])<=Long.parseLong(max.split("\\.")[1])){
+                return cur;
+            }
+        }
+        return "";
     }
 
     public void deleteDataByLocationName(String name){

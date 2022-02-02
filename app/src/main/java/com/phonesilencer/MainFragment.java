@@ -136,7 +136,7 @@ public class MainFragment extends Fragment {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String locationName = inputLayout.getEditText().getText().toString();
-                        String coordinates[] = new String[]{latitude+"",longitude+""};
+                        String coordinates[] = new String[]{String.format("%.4f",latitude),String.format("%.4f",longitude)};
                         sendLocationDataToDB(locationName,coordinates,alertMode,getBoundedBox(latitude,longitude));
                         checkDNDPermission();
                     }
@@ -273,7 +273,7 @@ public class MainFragment extends Fragment {
         double newLatitude = latitude+(100*m);
         double newLongitude = longitude+(100*m)/Math.cos(latitude*(pi/180));
 
-        return newLatitude+","+newLongitude;
+        return String.format("%.4f",newLatitude)+","+String.format("%.4f",newLongitude);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
