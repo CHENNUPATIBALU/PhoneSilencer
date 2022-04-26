@@ -163,6 +163,7 @@ public class MainFragment extends Fragment {
         progressDialog.setCancelable(false);
         progressDialog.show();
         storageHelper.setData(locationName,coordinates,alertMode,boundedBox);
+        new SharedPreferencesHelper(getActivity()).addLocation(locationName,coordinates[0]+","+coordinates[1],boundedBox,alertMode);
         Log.d("com.phonesilencer", "sendLocationDataToDB: "+boundedBox);
         progressDialog.dismiss();
     }

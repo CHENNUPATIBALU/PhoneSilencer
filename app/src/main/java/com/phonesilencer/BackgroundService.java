@@ -61,7 +61,7 @@ public class BackgroundService extends Service {
             if (locationResult != null && locationResult.getLastLocation() != null) {
                 double latitude = locationResult.getLastLocation().getLatitude();
                 double longitude = locationResult.getLastLocation().getLongitude();
-                Log.d("LOCATION_UPDATE", latitude + ", " + longitude);
+                Log.d("LOCATION_UPDATE", String.format("%.4f",latitude)+","+String.format("%.4f",longitude));
                 checkCoordinates(String.format("%.4f",latitude),String.format("%.4f",longitude));
             }
         }
@@ -139,20 +139,20 @@ public class BackgroundService extends Service {
     }
 
     public void checkCoordinates(String curLatitude, String curLongitude){
-        String data = storageHelper.getLocationNameByCoordinates(curLatitude+","+curLongitude);
+        //String data = storageHelper.getLocationNameByCoordinates(curLatitude+","+curLongitude);
+        String data = new SharedPreferencesHelper(getApplicationContext()).getCoordinates();
         Log.d(TAG, "checkCoordinates: "+data);
         if(!data.equals("")){
             String[] details = data.split(";");
-            double maxLat = Double.parseDouble(details[4].split(",")[0]);
-            double minLat = Double.parseDouble(details[4].split(",")[1]);
-            double maxLon = Double.parseDouble(details[4].split(",")[2]);
-            double minLon = Double.parseDouble(details[4].split(",")[3]);
-            Log.d("com.phonesilencer", "checkCoordinates: Max-Lat"+maxLat+", Min-Lat"+minLat+", Max-Lon"+maxLon+", Min-Lon"+minLon);
-            String alertMode = details[2];
-            String status = details[3];
-            Toast.makeText(this, "DB Success", Toast.LENGTH_SHORT).show();
+            double maxLat = Double.parseDouble(details[2].split(",")[0]);
+            double minLat = Double.parseDouble(details[2].split(",")[1]);
+            double maxLon = Double.parseDouble(details[2].split(",")[2]);
+            double minLon = Double.parseDouble(details[2].split(",")[3]);
+            Log.d("com.phonesilencer", "checkCoordinates: Max-Lat> "+maxLat+", Min-Lat> "+minLat+", Max-Lon> "+maxLon+", Min-Lon> "+minLon);
+            String alertMode = details[3];
+//            String status = details[3];
 
-            if((Double.parseDouble(curLatitude)<=maxLat && Double.parseDouble(curLatitude)>=minLat) && (Double.parseDouble(curLongitude)<=maxLon && Double.parseDouble(curLatitude)>=minLon)){
+            if((Double.parseDouble(curLatitude)<=maxLat && Double.parseDouble(curLatitude)>=minLat) && (Double.parseDouble(curLongitude)<=maxLon && Double.parseDouble(curLongitude)>=minLon)){
                 Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
                 switch (alertMode){
                     case "Silent":
@@ -185,8 +185,6 @@ public class BackgroundService extends Service {
 
     public String getBoundedBox(double latitude, double longitude){
         double earthDiameter = 6378.137D;
-//        double pi = Math.PI;
-//        double m = (1/((2*pi*360)*earthDiameter))/1000;
 
         double maxLat = latitude+Math.toDegrees((1/earthDiameter));
         double minLat = latitude-Math.toDegrees((1/earthDiameter));

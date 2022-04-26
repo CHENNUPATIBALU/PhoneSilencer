@@ -35,4 +35,21 @@ public class SharedPreferencesHelper {
         String address = sharedPreferences.getString("Location",null);
         return (address!=null)?address:"";
     }
+
+    public void addLocation(String name, String coordinates, String boundedBox, String alertMode){
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("Location_Name",name);
+        editor.putString("Coordinates",coordinates);
+        editor.putString("BoundedBox",boundedBox);
+        editor.putString("AlertMode",alertMode);
+        editor.apply();
+    }
+
+    public String getCoordinates(){
+        String coords = sharedPreferences.getString("Coordinates",null);
+        String boundedBox = sharedPreferences.getString("BoundedBox",null);
+        String alertMode = sharedPreferences.getString("AlertMode",null);
+        String locationName = sharedPreferences.getString("Location_Name",null);
+        return (coords!=null)?locationName+";"+coords+";"+boundedBox+";"+alertMode:"";
+    }
 }
