@@ -104,7 +104,7 @@ public class BackgroundService extends Service {
         chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
 
         Intent intent = new Intent();
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_MUTABLE);
 
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         assert manager != null;
@@ -139,67 +139,61 @@ public class BackgroundService extends Service {
     }
 
     public void checkCoordinates(String curLatitude, String curLongitude){
-        String boundedRegion = getBoundedBox(Double.parseDouble(curLatitude),Double.parseDouble(curLongitude));
-        String data = storageHelper.getLocationNameByCoordinates(boundedRegion.split(",")[0]+","+boundedRegion.split(",")[1]);
-        Log.d(TAG, "checkCoordinates: "+boundedRegion);
+        String data = storageHelper.getLocationNameByCoordinates(curLatitude+","+curLongitude);
+        Log.d(TAG, "checkCoordinates: "+data);
         if(!data.equals("")){
             String[] details = data.split(";");
-            String latitude = Double.parseDouble(details[4].split(",")[0])+"";
-            String longitude = Double.parseDouble(details[4].split(",")[1])+"";
-            Log.d(TAG, "checkCoordinates: "+latitude+","+longitude);
+            double maxLat = Double.parseDouble(details[4].split(",")[0]);
+            double minLat = Double.parseDouble(details[4].split(",")[1]);
+            double maxLon = Double.parseDouble(details[4].split(",")[2]);
+            double minLon = Double.parseDouble(details[4].split(",")[3]);
+            Log.d("com.phonesilencer", "checkCoordinates: Max-Lat"+maxLat+", Min-Lat"+minLat+", Max-Lon"+maxLon+", Min-Lon"+minLon);
             String alertMode = details[2];
             String status = details[3];
+            Toast.makeText(this, "DB Success", Toast.LENGTH_SHORT).show();
 
-            curLatitude = boundedRegion.split(",")[0];
-            curLongitude = boundedRegion.split(",")[1];
-            Log.d(TAG, "checkCoordinates: "+latitude.split("\\.")[0]);
-            if(latitude.split("\\.")[0].equals(curLatitude.split("\\.")[0]) && longitude.split("\\.")[0].equals(curLongitude.split("\\.")[0])){
-                String latDec = latitude.split("\\.")[1];
-                Log.d(TAG, "checkCoordinates: "+latDec);
-                String longDec = longitude.split("\\.")[1];
-                String curLatDec = curLatitude.split("\\.")[1];
-                String curLongDec = curLongitude.split("\\.")[1];
-
-                if((Long.parseLong(curLatDec)<=Long.parseLong(latDec) &&  Long.parseLong(curLatDec)<=Long.parseLong(boundedRegion.split(",")[0])) && (Long.parseLong(curLongDec)>=Long.parseLong(longDec) && Long.parseLong(curLongDec)<=Long.parseLong(boundedRegion.split(",")[1])) && status.equals("1")){
-                    switch (alertMode){
-                        case "Silent":
-                            try{
-                                new AudioManagerHelper(getApplicationContext()).setAudioToSilent();
-                            }catch (SecurityException securityException){
-                                Toast.makeText(this, "Do Not Disturb Permission not granted", Toast.LENGTH_SHORT).show();
-                            }
-                            Log.d(TAG, "onSuccess: SILENCED");
-                            break;
-                        case "Vibrate":
-                            try{
-                                new AudioManagerHelper(getApplicationContext()).setAudioToVibration();
-                            }catch (SecurityException securityException){
-                                Toast.makeText(this, "Do Not Disturb Permission not granted", Toast.LENGTH_SHORT).show();
-                            }
-                            Log.d(TAG, "onSuccess: VIBRATE");
-                            break;
-                    }
-                }else{
-                    try{
-                        new AudioManagerHelper(getApplicationContext()).setAudioToNormal();
-                    }catch (SecurityException securityException){
-                        Toast.makeText(this, "Do Not Disturb Permission not granted", Toast.LENGTH_SHORT).show();
-                    }
-                    Log.d(TAG, "onSuccess: NORMAL");
+            if((Double.parseDouble(curLatitude)<=maxLat && Double.parseDouble(curLatitude)>=minLat) && (Double.parseDouble(curLongitude)<=maxLon && Double.parseDouble(curLatitude)>=minLon)){
+                Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
+                switch (alertMode){
+                    case "Silent":
+                        try{
+                            new AudioManagerHelper(getApplicationContext()).setAudioToSilent();
+                        }catch (SecurityException securityException){
+                            Toast.makeText(this, "Do Not Disturb Permission not granted", Toast.LENGTH_SHORT).show();
+                        }
+                        Log.d(TAG, "onSuccess: SILENCED");
+                        break;
+                    case "Vibrate":
+                        try{
+                            new AudioManagerHelper(getApplicationContext()).setAudioToVibration();
+                        }catch (SecurityException securityException){
+                            Toast.makeText(this, "Do Not Disturb Permission not granted", Toast.LENGTH_SHORT).show();
+                        }
+                        Log.d(TAG, "onSuccess: VIBRATE");
+                        break;
                 }
+            }else{
+                try{
+                    new AudioManagerHelper(getApplicationContext()).setAudioToNormal();
+                }catch (SecurityException securityException){
+                    Toast.makeText(this, "Do Not Disturb Permission not granted", Toast.LENGTH_SHORT).show();
+                }
+                Log.d(TAG, "onSuccess: NORMAL");
             }
         }
     }
 
     public String getBoundedBox(double latitude, double longitude){
         double earthDiameter = 6378.137D;
-        double pi = Math.PI;
-        double m = (1/((2*pi*360)*earthDiameter))/1000;
+//        double pi = Math.PI;
+//        double m = (1/((2*pi*360)*earthDiameter))/1000;
 
-        double newLatitude = latitude+(100*m);
-        double newLongitude = longitude+(100*m)/Math.cos(latitude*(pi/180));
+        double maxLat = latitude+Math.toDegrees((1/earthDiameter));
+        double minLat = latitude-Math.toDegrees((1/earthDiameter));
+        double maxLon = longitude+Math.toDegrees((Math.asin(1/earthDiameter))/Math.cos(Math.toRadians(latitude)));
+        double minLon = longitude-Math.toDegrees(Math.asin(1/earthDiameter)/Math.cos(Math.toRadians(latitude)));
 
-        return String.format("%.4f",newLatitude)+","+String.format("%.4f",newLongitude);
+        return String.format("%.4f",maxLat)+","+String.format("%.4f",minLat)+","+String.format("%.4f",maxLon)+","+String.format("%.4f",minLon);
     }
 
 

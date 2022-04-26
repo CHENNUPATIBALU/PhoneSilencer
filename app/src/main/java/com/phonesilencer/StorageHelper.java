@@ -79,7 +79,7 @@ public class StorageHelper extends SQLiteOpenHelper {
     public String getLocationNameByCoordinates(String location){
         String res = "";
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("select * from locations where boundedBox=?",new String[]{location});
+        Cursor cursor = db.rawQuery("select * from locations where location like '"+location.split(",")[0].split("\\.")[0]+"%'",null);
         if(cursor.getCount()>0){
             while (cursor.moveToNext()){
                 res += cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getInt(3)+";"+cursor.getString(4);
@@ -88,7 +88,7 @@ public class StorageHelper extends SQLiteOpenHelper {
             String result = res.split(";")[4];
             String latitude = compareBoundedBoxes(result.split(",")[0],location.split(",")[0]);
             Log.d(TAG, "getLocationNameByCoordinates: "+latitude);
-            String longitude = compareBoundedBoxes(result.split(",")[1],location.split(",")[1]);
+            String longitude = compareBoundedBoxes(result.split(",")[2],location.split(",")[1]);
 
             if(!(latitude.equals("") && longitude.equals(""))){
                 return res.split(";")[0]+";"+res.split(";")[1]+";"+res.split(";")[2]+";"+res.split(";")[3]+";"+";"+latitude+","+longitude;

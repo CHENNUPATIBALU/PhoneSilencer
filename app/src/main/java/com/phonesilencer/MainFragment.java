@@ -163,6 +163,7 @@ public class MainFragment extends Fragment {
         progressDialog.setCancelable(false);
         progressDialog.show();
         storageHelper.setData(locationName,coordinates,alertMode,boundedBox);
+        Log.d("com.phonesilencer", "sendLocationDataToDB: "+boundedBox);
         progressDialog.dismiss();
     }
 
@@ -265,15 +266,27 @@ public class MainFragment extends Fragment {
         }
     }
 
+//    public String getBoundedBox(double latitude, double longitude){
+//        double earthDiameter = 6378.137D;
+//        double pi = Math.PI;
+//        double m = (1/((2*pi*360)*earthDiameter))/1000;
+//
+//        double newLatitude = latitude+(100*m);
+//        double newLongitude = longitude+(100*m)/Math.cos(latitude*(pi/180));
+//
+//        return String.format("%.4f",newLatitude)+","+String.format("%.4f",newLongitude);
+//    }
     public String getBoundedBox(double latitude, double longitude){
         double earthDiameter = 6378.137D;
-        double pi = Math.PI;
-        double m = (1/((2*pi*360)*earthDiameter))/1000;
+    //        double pi = Math.PI;
+    //        double m = (1/((2*pi*360)*earthDiameter))/1000;
 
-        double newLatitude = latitude+(100*m);
-        double newLongitude = longitude+(100*m)/Math.cos(latitude*(pi/180));
+        double maxLat = latitude+Math.toDegrees((1/earthDiameter));
+        double minLat = latitude-Math.toDegrees((1/earthDiameter));
+        double maxLon = longitude+Math.toDegrees((Math.asin(1/earthDiameter))/Math.cos(Math.toRadians(latitude)));
+        double minLon = longitude-Math.toDegrees(Math.asin(1/earthDiameter)/Math.cos(Math.toRadians(latitude)));
 
-        return String.format("%.4f",newLatitude)+","+String.format("%.4f",newLongitude);
+        return String.format("%.4f",maxLat)+","+String.format("%.4f",minLat)+","+String.format("%.4f",maxLon)+","+String.format("%.4f",minLon);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
